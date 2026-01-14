@@ -109,8 +109,7 @@ class MercariScraper:
             # Wait for items to load
             print("[Scraper] Waiting for items to load...")
             wait = WebDriverWait(self.driver, 15)
-            # Wait for at least one item or a "no results" indicator
-            # We try to wait for the item grid
+            # Wait for at least one item or a "no results" indicator. We try to wait for the item grid
             wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "li[data-testid='item-cell'], mer-item-thumbnail")))
             
             # Scroll down a bit to trigger lazy loading if needed
@@ -131,8 +130,7 @@ class MercariScraper:
                 print("[Scraper] Timeout waiting for results. Mercari might be blocking or slow.")
             return []
         
-        # We don't close the driver here to keep it alive for next request, 
-        # but in a long lived app we might want to manage lifecycle better.
+        # We don't close the driver here to keep it alive for next request, but in a long lived app we might want to manage lifecycle better.
     
     def _extract_products(self, soup: BeautifulSoup, max_results: int) -> List[Dict]:
         """
