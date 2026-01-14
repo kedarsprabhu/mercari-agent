@@ -1,5 +1,5 @@
 """
-Mercari AI Shopping Agent (OpenAI Version)
+Mercari AI Shopping Agent
 
 This agent works with OpenAI's GPT models including GPT-4o via GitHub Models.
 It uses OpenAI's function calling API for tool execution.
@@ -20,13 +20,12 @@ from tools_openai import TOOLS_OPENAI, execute_tool
 class MercariAgentOpenAI:
     """
     AI Agent for shopping on Mercari Japan using OpenAI's function calling capabilities.
-    Compatible with GitHub Models (free GPT-4o access).
     """
     
     def __init__(
         self, 
         api_key: Optional[str] = None, 
-        model: str = "gpt-4.1",
+        model: str = "gpt-4.1", #We could change to any other gpt models
         base_url: Optional[str] = None
     ):
         """
@@ -34,13 +33,13 @@ class MercariAgentOpenAI:
         
         Args:
             api_key: OpenAI API key or GitHub token (if not provided, will use OPENAI_API_KEY or GITHUB_TOKEN env var)
-            model: Model to use (default: gpt-4o)
+            model: Model to use (default: gpt-4.1)
             base_url: Base URL for API (use "https://models.inference.ai.azure.com" for GitHub Models)
         
         For GitHub Models (free):
             1. Get token from https://github.com/settings/tokens
             2. Set base_url="https://models.inference.ai.azure.com"
-            3. Use model="gpt-4o"
+            3. Use model="gpt-4.1"
         """
         # Try to get API key from environment
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY") or os.environ.get("GITHUB_TOKEN")
@@ -61,29 +60,30 @@ class MercariAgentOpenAI:
         
         self.system_message = {
             "role": "system",
-            "content": """You are a helpful AI shopping assistant for Mercari Japan, a popular online marketplace in Japan.
+            "content": """
+            You are a helpful AI shopping assistant for Mercari Japan, a popular online marketplace in Japan.
 
-IMPORTANT - ACTION-FIRST APPROACH:
-When a user asks to find something, DO NOT ask clarifying questions first. Instead:
-1. Immediately search using reasonable defaults based on their request
-2. Translate English keywords to Japanese if needed (e.g., "toys" → "おもちゃ")
-3. Use the search_mercari function right away
-4. Analyze results with analyze_products to get top 3 recommendations
-5. Present the recommendations in this EXACT format:
+            IMPORTANT - ACTION-FIRST APPROACH:
+            When a user asks to find something, DO NOT ask clarifying questions first. Instead:
+            1. Immediately search using reasonable defaults based on their request
+            2. Translate English keywords to Japanese if needed (e.g., "toys" → "おもちゃ")
+            3. Use the search_mercari function right away
+            4. Analyze results with analyze_products to get top 3 recommendations
+            5. Present the recommendations in this EXACT format:
 
-   **[Product Name](Product URL)**
-   - **Price:** ¥X,XXX
-   - **Condition:** [condition]
-   - **Why recommended:** [List each reason from the 'reasons' array on a new line]
+            [Product Name](Product URL)
+            - Price: ¥X,XXX
+            - Condition: [condition]
+            - Why recommended: [List each reason from the 'reasons' array on a new line]
 
-6. ALWAYS include the 'reasons' from the analyze_products results - these explain WHY each product is a good match
-7. THEN at the END, offer to refine the search with follow-up questions about:
-   - Specific types, brands, or features
-   - Condition preferences (new vs used)
-   - Price range adjustments
+            6. ALWAYS include the 'reasons' from the analyze_products results - these explain WHY each product is a good match
+            7. THEN at the END, offer to refine the search with follow-up questions about:
+            - Specific types, brands, or features
+            - Condition preferences (new vs used)
+            - Price range adjustments
 
-Be proactive and helpful. Don't overthink - just search first, show results with clear reasoning, then offer to refine.
-Always provide product URLs so users can view items on Mercari."""
+            Be proactive and helpful. Don't overthink - just search first, show results with clear reasoning, then offer to refine.
+            Always provide product URLs so users can view items on Mercari."""
         }
     
     def chat(self, user_message: str) -> str:
