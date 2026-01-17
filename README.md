@@ -20,7 +20,7 @@ This agent uses OpenAI's GPT-4.1 with function calling to:
 **Flow:** User Input → GPT-4.1 Agent → Tools → Selenium Scraper → Analysis → Recommendations
 
 ### Why GPT-4.1?
-- Free testing via GitHub Models (no credit card)
+- Free testing via GitHub Models
 - Excellent function-calling capabilities
 - Strong Japanese language understanding
 - Well-documented API
@@ -101,25 +101,10 @@ for chunk in agent.chat_stream("Show excellent condition only"):
 agent.reset_conversation()
 ```
 
-### Advanced Usage
-
-```python
-from mercari_scraper import MercariScraper
-
-scraper = MercariScraper(delay=3.0, headless=False)
-products = scraper.search_products(
-    keyword="iPhone 14",
-    max_results=30,
-    min_price=50000,
-    max_price=100000,
-    sort="price_asc"
-)
-```
-
 ## Design Choices
 
 ### Tool-Calling Architecture
-Uses OpenAI's function calling API for dynamic tool invocation (`search_mercari`, `analyze_products`). More flexible than hardcoded workflows.
+Uses OpenAI's function calling API for dynamic tool invocation (`search_mercari`, `analyze_products`, `get_product_details`). More flexible than hardcoded workflows.
 
 ### Selenium + BeautifulSoup
 Mercari uses JavaScript rendering, requiring browser automation. Includes anti-bot measures and headless mode.
@@ -133,22 +118,14 @@ Multi-criteria scoring (price, condition, completeness) with flexible priorities
 ### Conversation Management
 Stateful conversations maintain context across turns with reset capability for natural interactions.
 
-## Improvements
+## Simple Improvement Steps
 
-### Short-term
-- Extract seller ratings and descriptions
-- Add retry logic and caching
-- Japanese translation for English queries
-- Synonym expansion and category filtering
-- Price history tracking
-- Image display and comparison tables
-
-### Long-term
-- Multi-platform support (other Japanese marketplaces)
-- User preference learning and personalization
-- Automated bidding and price alerts
-- Proxy rotation and comprehensive testing
-- Unit/integration tests and performance benchmarks
+- Add Japanese translation for English queries
+- Implement retry logic and results caching
+- Add price history tracking and alerts
+- Support multi-platform searching
+- Add user preference learning
+- Write comprehensive tests
 
 ## Troubleshooting
 
@@ -165,7 +142,7 @@ Stateful conversations maintain context across turns with reset capability for n
 - **Rate limiting**: Default 2-second delay between requests (configurable: `MercariScraper(delay=X)`)
 - **Error handling**: Gracefully handles API errors, scraping failures, malformed data
 - **Token usage**: Maintains conversation history; long conversations may need pruning
-- **Condition information**: Shows "See details" because Mercari's search page doesn't display condition data. Click product URLs to see actual condition (新品, 未使用, etc.). Fetching condition for all products would require visiting each detail page (~20x slower)
+- **Detailed product info**: Use `get_product_details` tool to fetch complete information (condition, description, seller, shipping) for specific products. This visits the product page and takes a few seconds per item
 
 ## License
 

@@ -67,17 +67,22 @@ class MercariAgentOpenAI:
             2. Translate English keywords to Japanese if needed (e.g., "toys" → "おもちゃ")
             3. Use the search_mercari function right away
             4. Analyze results with analyze_products to get top 3 recommendations
-            5. Present recommendations in this format:
+            5. IMPORTANT: For each of the top 3 recommended products, use get_product_details to fetch 
+               complete information (condition, description, shipping). This takes a few seconds per product 
+               but provides accurate details instead of "See details".
+            6. Present recommendations with FULL details in this format:
 
             [Product Name](Product URL)
             - Price: ¥X,XXX
-            - Condition: [condition]
+            - Condition: [actual condition details]
+            - Shipping: [shipping info]
+            - Description: [brief summary of description]
             - Why recommended: [reasons]
 
-            6. ALWAYS include the 'reasons' from analyze_products results
-            7. At the END, offer to refine the search with follow-up questions
+            7. ALWAYS include the 'reasons' from analyze_products results
+            8. At the END, offer to refine the search with follow-up questions
 
-            Be proactive. Search first, show results with reasoning, then offer to refine.
+            Be proactive. Search first, fetch details for top picks, show complete results, then offer to refine.
             Always provide product URLs so users can view items on Mercari."""
         }
     

@@ -232,5 +232,173 @@ class MercariScraper:
         }
         return condition_map.get(condition.lower(), '')
 
+    def get_product_details(self, product_url: str) -> Optional[Dict]:
+        """
+        Scrape detailed information from a single product page.
+        
+        Args:
+            product_url: Full URL to the Mercari product page
+            
+        Returns:
+            Dictionary containing complete product details or None if failed
+        """
+        self._setup_driver()
+        
+        print(f"[Scraper] Fetching product details from: {product_url}")
+        
+        try:
+            self.driver.get(product_url)
+            
+            # Wait for main content to load
+            wait = WebDriverWait(self.driver, 15)
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "mer-heading, h1, [data-testid='item-name']")))
+            
+            # Additional wait for dynamic content
+            time.sleep(self.delay)
+            
+            soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+            
+            product = {
+                'url': product_url,
+                'id': product_url.split('/item/')[-1].split('?')[0] if '/item/' in product_url else 'unknown'
+            }
+            
+            # Product Name/Title
+            name_elem = (
+                soup.find('mer-heading', {'data-testid': 'item-name'}) or
+                soup.find('h1') or
+                soup.find('mer-heading')
+            )
+            product['name'] = name_elem.get_text(strip=True) if name_elem else 'Unknown Product'
+            
+            # Price
+            price_elem = (
+                soup.find('mer-price', {'data-testid': 'price'}) or
+                soup.find('span', {'data-testid': 'price'}) or
+                soup.find('mer-price')
+            )
+            if price_elem:
+                price_text = price_elem.get('value') or price_elem.get_text(strip=True)
+                price_clean = ''.join(filter(str.isdigit, str(price_text)))
+                product['price'] = int(price_clean) if price_clean else 0
+                product['price_display'] = f"¥{product['price']:,}"
+            else:
+                product['price'] = 0
+                product['price_display'] = 'N/A'
+            
+            # Condition - Look for the item condition section
+            condition_elem = (
+                soup.find('span', {'data-testid': 'item-condition'}) or
+                soup.find('mer-text', string=lambda x: x and ('新品' in str(x) or '中古' in str(x) or '未使用' in str(x))) or
+                soup.find(string=lambda x: x and '商品の状態' in str(x))
+            )
+            if condition_elem:
+                # Try to get the actual condition value
+                parent = condition_elem.parent if hasattr(condition_elem, 'parent') else None
+                if parent:
+                    next_elem = parent.find_next_sibling() or parent.find_next()
+                    if next_elem:
+                        product['condition'] = next_elem.get_text(strip=True)
+                    else:
+                        product['condition'] = condition_elem.get_text(strip=True) if hasattr(condition_elem, 'get_text') else str(condition_elem)
+                else:
+                    product['condition'] = str(condition_elem)
+            else:
+                # Try alternative: look for condition in table rows
+                rows = soup.find_all('mer-display-row') or soup.find_all('tr')
+                for row in rows:
+                    text = row.get_text(strip=True)
+                    if '状態' in text or 'condition' in text.lower():
+                        product['condition'] = text.replace('商品の状態', '').strip()
+                        break
+                else:
+                    product['condition'] = 'Not specified'
+            
+            # Description
+            desc_elem = (
+                soup.find('mer-text', {'data-testid': 'description'}) or
+                soup.find('pre', {'data-testid': 'description'}) or
+                soup.find('div', {'data-testid': 'description'}) or
+                soup.find('section', {'aria-labelledby': lambda x: x and 'description' in str(x).lower()})
+            )
+            if desc_elem:
+                product['description'] = desc_elem.get_text(strip=True)
+            else:
+                # Fallback: look for any large text block
+                desc_section = soup.find('section', class_=lambda x: x and 'description' in str(x).lower())
+                product['description'] = desc_section.get_text(strip=True) if desc_section else 'No description available'
+            
+            # Shipping Information
+            shipping_elem = (
+                soup.find('span', {'data-testid': 'shipping-fee'}) or
+                soup.find('mer-text', string=lambda x: x and ('送料' in str(x) or '配送' in str(x)))
+            )
+            if shipping_elem:
+                product['shipping'] = shipping_elem.get_text(strip=True)
+            else:
+                # Look in table rows
+                for row in soup.find_all(['mer-display-row', 'tr', 'div']):
+                    text = row.get_text(strip=True)
+                    if '送料' in text or '配送' in text:
+                        product['shipping'] = text
+                        break
+                else:
+                    product['shipping'] = 'See listing'
+            
+            # Seller Information
+            seller_elem = (
+                soup.find('a', {'data-testid': 'seller-name'}) or
+                soup.find('mer-user-object') or
+                soup.find('a', href=lambda x: x and '/user/profile/' in str(x))
+            )
+            if seller_elem:
+                product['seller_name'] = seller_elem.get_text(strip=True) or seller_elem.get('name', 'Unknown')
+                seller_link = seller_elem.get('href', '')
+                if seller_link and not seller_link.startswith('http'):
+                    seller_link = self.BASE_URL + seller_link
+                product['seller_url'] = seller_link
+            else:
+                product['seller_name'] = 'Unknown'
+                product['seller_url'] = ''
+            
+            # Category
+            category_elem = soup.find('mer-breadcrumbs') or soup.find('nav', {'aria-label': 'breadcrumb'})
+            if category_elem:
+                breadcrumb_items = category_elem.find_all('a') or category_elem.find_all('span')
+                product['category'] = ' > '.join([item.get_text(strip=True) for item in breadcrumb_items if item.get_text(strip=True)])
+            else:
+                product['category'] = 'Not specified'
+            
+            # Sold Status
+            sold_indicator = (
+                soup.find('div', {'aria-label': '売り切れ'}) or
+                soup.find('mer-text', string=lambda x: x and 'SOLD' in str(x).upper()) or
+                soup.find(string=lambda x: x and '売り切れ' in str(x))
+            )
+            product['is_sold'] = bool(sold_indicator)
+            
+            # Number of likes/favorites
+            likes_elem = soup.find('span', {'data-testid': 'like-count'}) or soup.find('mer-icon-button', {'name': 'heart'})
+            if likes_elem:
+                likes_text = likes_elem.get_text(strip=True)
+                likes_clean = ''.join(filter(str.isdigit, likes_text))
+                product['likes'] = int(likes_clean) if likes_clean else 0
+            else:
+                product['likes'] = 0
+            
+            # Images
+            img_elements = soup.find_all('img', {'data-testid': lambda x: x and 'image' in str(x).lower()})
+            if not img_elements:
+                img_elements = soup.find_all('img', src=lambda x: x and 'static.mercdn.net' in str(x))
+            product['images'] = [img.get('src') for img in img_elements[:10] if img.get('src')]
+            product['image_count'] = len(product['images'])
+            
+            print(f"[Scraper] Successfully extracted details for: {product['name'][:50]}...")
+            return product
+            
+        except Exception as e:
+            print(f"[Scraper] Error fetching product details: {e}")
+            return None
+
     def __del__(self):
         self._close_driver()

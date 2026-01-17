@@ -86,6 +86,23 @@ TOOLS_OPENAI = [
                 "required": ["products"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_product_details",
+            "description": "Fetch complete details for a specific product by visiting its page. This provides more information than the search results, including full description, condition details, shipping info, seller information, and more. Use this when you need detailed information about a specific product. Note: This takes extra time as it loads the full product page.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_url": {
+                        "type": "string",
+                        "description": "The full Mercari product URL (e.g., 'https://jp.mercari.com/item/m12345678901')"
+                    }
+                },
+                "required": ["product_url"]
+            }
+        }
     }
 ]
 
@@ -105,6 +122,8 @@ def execute_tool(tool_name: str, tool_input: Dict[str, Any]) -> Dict[str, Any]:
         return search_mercari(**tool_input)
     elif tool_name == "analyze_products":
         return analyze_products(**tool_input)
+    elif tool_name == "get_product_details":
+        return get_product_details(**tool_input)
     else:
         return {"error": f"Unknown tool: {tool_name}"}
 
@@ -150,6 +169,39 @@ def search_mercari(
             "success": False,
             "error": str(e),
             "products": []
+        }
+
+
+def get_product_details(product_url: str) -> Dict[str, Any]:
+    """
+    Fetch complete details for a specific product by visiting its page.
+    
+    Args:
+        product_url: Full URL to the Mercari product page
+    
+    Returns:
+        Dictionary containing complete product details
+    """
+    try:
+        product = scraper.get_product_details(product_url)
+        
+        if product:
+            return {
+                "success": True,
+                "product": product
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Failed to extract product details",
+                "product": None
+            }
+    
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "product": None
         }
 
 
