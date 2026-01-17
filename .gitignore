@@ -26,12 +26,4 @@ Thumbs.db
 # Project specific
 *.log
 .pytest_cache/
-.coverage
-htmlcov/
-
-# Test and debug files
-test_*.py
-debug_*.txt
-reproduce_*.py
-demo.py
-example_usage.py
+.venv/

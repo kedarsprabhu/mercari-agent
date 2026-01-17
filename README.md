@@ -4,7 +4,7 @@ An intelligent AI agent that helps users find and purchase products on Mercari J
 
 ## Overview
 
-This agent uses OpenAI's GPT-4.1 with function calling to:
+This agent uses OpenAI's GPT-4o with function calling to:
 - Parse natural language queries for product requirements and preferences
 - Execute smart searches on Mercari Japan with filters
 - Scrape and analyze product data (names, prices, conditions, URLs)
@@ -17,9 +17,9 @@ This agent uses OpenAI's GPT-4.1 with function calling to:
 
 **Components:** `agent.py` (orchestration), `tools.py` (search & analysis), `mercari_scraper.py` (Selenium scraper)
 
-**Flow:** User Input → GPT-4.1 Agent → Tools → Selenium Scraper → Analysis → Recommendations
+**Flow:** User Input → GPT-4o Agent → Tools → Selenium Scraper → Analysis → Recommendations
 
-### Why GPT-4.1?
+### Why GPT-4o?
 - Free testing via GitHub Models
 - Excellent function-calling capabilities
 - Strong Japanese language understanding
@@ -88,7 +88,7 @@ from agent import MercariAgentOpenAI
 agent = MercariAgentOpenAI(
     api_key="your-github-token",
     base_url="https://models.inference.ai.azure.com",
-    model="gpt-4.1"
+    model="gpt-4o"
 )
 
 # Non-streaming
@@ -121,11 +121,13 @@ Stateful conversations maintain context across turns with reset capability for n
 ## Simple Improvement Steps
 
 - Add Japanese translation for English queries
+- Potential scraper delay reduction
 - Implement retry logic and results caching
 - Add price history tracking and alerts
 - Support multi-platform searching
 - Add user preference learning
 - Write comprehensive tests
+- Also we could add user language input selection and provide entire response in that language
 
 ## Troubleshooting
 
@@ -148,4 +150,4 @@ Stateful conversations maintain context across turns with reset capability for n
 
 Created for the Mercari Japan AI Shopper Challenge.
 
-**Acknowledgments:** OpenAI GPT-4.1 (GitHub Models), Selenium, BeautifulSoup4, Mercari Japan
+**Acknowledgments:** OpenAI GPT-4o (GitHub Models), Selenium, BeautifulSoup4, Mercari Japan

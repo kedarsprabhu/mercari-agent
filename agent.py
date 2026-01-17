@@ -1,7 +1,7 @@
 """
 Mercari AI Shopping Agent
 
-This agent works with OpenAI's GPT models including GPT-4.1 via GitHub Models.
+This agent works with OpenAI's GPT models including GPT-4o.
 It uses OpenAI's function calling API for tool execution.
 """
 
@@ -29,7 +29,7 @@ class MercariAgentOpenAI:
     def __init__(
         self, 
         api_key: Optional[str] = None, 
-        model: str = "gpt-4.1",
+        model: str = "gpt-4o",
         base_url: Optional[str] = None
     ):
         """
@@ -37,7 +37,7 @@ class MercariAgentOpenAI:
         
         Args:
             api_key: OpenAI API key or GitHub token (defaults to OPENAI_API_KEY or GITHUB_TOKEN env var)
-            model: Model to use (default: gpt-4.1)
+            model: Model to use (default: gpt-4o)
             base_url: Base URL for API (use "https://models.inference.ai.azure.com" for GitHub Models)
         """
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY") or os.environ.get("GITHUB_TOKEN")
@@ -186,7 +186,7 @@ def main():
     openai_key = os.environ.get("OPENAI_API_KEY")
     
     if github_token:
-        print("Using GitHub Models (free GPT-4.1)\n")
+        print("Using GitHub Models (free GPT-4o)\n")
     elif openai_key:
         print("Using OpenAI API\n")
     
@@ -198,7 +198,7 @@ def main():
             agent = MercariAgentOpenAI(
                 api_key=github_token,
                 base_url="https://models.inference.ai.azure.com",
-                model="gpt-4.1"
+                model="gpt-4o"
             )
         else:
             agent = MercariAgentOpenAI()

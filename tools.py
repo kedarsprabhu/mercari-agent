@@ -40,6 +40,11 @@ TOOLS_OPENAI = [
                         "type": "integer",
                         "description": "Maximum price in Japanese Yen (JPY). Example: 50000 for ¥50,000"
                     },
+                    "condition": {
+                        "type": "string",
+                        "description": "Product condition filter",
+                        "enum": ["new", "like_new", "good", "acceptable", "poor"]
+                    },
                     "sort": {
                         "type": "string",
                         "description": "Sort order: 'created_time' for newest first, 'price_asc' for cheapest first, 'price_desc' for most expensive first",
@@ -133,6 +138,7 @@ def search_mercari(
     max_results: int = 20,
     min_price: Optional[int] = None,
     max_price: Optional[int] = None,
+    condition: Optional[str] = None,
     sort: str = "created_time"
 ) -> Dict[str, Any]:
     """
@@ -143,6 +149,7 @@ def search_mercari(
         max_results: Maximum number of results (default: 20)
         min_price: Minimum price in JPY
         max_price: Maximum price in JPY
+        condition: Product condition (new, like_new, good, acceptable, poor)
         sort: Sort order
     
     Returns:
@@ -154,6 +161,7 @@ def search_mercari(
             max_results=min(max_results, 50),  # Cap at 50
             min_price=min_price,
             max_price=max_price,
+            condition=condition,
             sort=sort
         )
         
